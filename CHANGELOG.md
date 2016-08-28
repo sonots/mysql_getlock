@@ -1,3 +1,9 @@
+# 0.2.1 (2016-08-28)
+
+Enhancements:
+
+* Raises `LockError` if #synchronize failed to acquore a lock
+
 # 0.2.0 (2016-08-28)
 
 Enhancements:
