@@ -3,8 +3,23 @@
 require "bundler/setup"
 require "mysql_getlock"
 require 'logger'
+require 'optparse'
 
-if ARGV[0] == 'exit!'
+opts = {
+  timeout: -1,
+  kill: false
+}
+OptionParser.new.tap {|op|
+  op.on('--timeout VALUE') {|v|
+    opts[:timeout] = Float(v)
+  }
+  op.on('--kill') {|v|
+    opts[:kill] = true
+  }
+  op.parse(ARGV)
+}
+
+if opts[:kill]
   trap('INT') do
     exit!
   end
@@ -12,7 +27,8 @@ end
 
 mysql2 = Mysql2::Client.new
 mutex = MysqlGetlock.new(
-  mysql2: mysql2, key: 'mysql_getlock2', logger: Logger.new(STDOUT)
+  mysql2: mysql2, key: 'mysql_getlock', logger: Logger.new(STDOUT),
+  timeout: opts[:timeout]
 )
 mutex.synchronize do
   loop do
