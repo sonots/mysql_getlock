@@ -66,8 +66,18 @@ class MysqlGetlock
   end
 
   def locked?
-    results = mysql2.query(%Q[select is_free_lock('#{key}')], as: :array)
-    results.to_a.first.first == 0
+    results = mysql2.query(%Q[select is_used_lock('#{key}')], as: :array)
+    !!results.to_a.first.first
+  end
+
+  # return true if locked by myself
+  def self_locked?
+    results = mysql2.query(%Q[select is_used_lock('#{key}')], as: :array)
+    lock_id = results.to_a.first.first
+    return false if lock_id.nil?
+    results = mysql2.query(%Q[select connection_id()], as: :array)
+    self_id = results.to_a.first.first
+    self_id == lock_id
   end
 
   def synchronize(&block)
