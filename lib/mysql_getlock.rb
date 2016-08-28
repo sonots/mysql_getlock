@@ -7,6 +7,7 @@ class MysqlGetlock
   TIMEOUT = -1 # inifinity
 
   class Error < ::StandardError; end
+  class LockError < ::StandardError; end
 
   def initialize(mysql2:, key:, logger: nil, timeout: TIMEOUT)
     self.mysql2 = mysql2
@@ -27,7 +28,7 @@ class MysqlGetlock
       raise Error, "get_lock() is already issued in the same connection for '#{current_session_key}'"
     end
 
-    logger.info { "#{log_head}Wait acquiring a mysql lock '#{key}'" } if logger
+    logger.info { "#{log_head}Wait #{timeout < 0 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
     results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
     case results.to_a.first.first
     when 1
@@ -81,7 +82,7 @@ class MysqlGetlock
   end
 
   def synchronize(&block)
-    lock
+    raise LockError unless lock
     begin
       yield
     ensure
