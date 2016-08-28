@@ -2,16 +2,23 @@ require 'mysql2'
 require "mysql_getlock/version"
 
 class MysqlGetlock
-  attr_reader :mysql2, :key, :logger, :timeout
-
   TIMEOUT = -1 # inifinity
   class Error < ::StandardError; end
 
   def initialize(mysql2:, key:, logger: nil, timeout: TIMEOUT)
+    self.mysql2 = mysql2
+    self.key = key
+    self.logger = logger
+    self.timeout = timeout
+  end
+
+  attr_reader :mysql2, :key, :logger, :timeout
+
+  # Use this setter if you reconnect mysql2 (which means renew Mysql2::Client instance),
+  # but still want to use same MysqlGetlock instance
+  def mysql2=(mysql2)
     @mysql2 = mysql2
-    @key = Mysql2::Client.escape(key)
-    @logger = logger
-    @timeout = Integer(timeout)
+    @multiple_lockable = nil
   end
 
   def lock
