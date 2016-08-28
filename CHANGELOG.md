@@ -1,3 +1,9 @@
+# 0.2.0 (2016-08-28)
+
+Enhancements:
+
+* Add #self_locked? to check lock is obtained by myself
+
 # 0.1.2 (2016-08-28)
 
 Enhancements:
