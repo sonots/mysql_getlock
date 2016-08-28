@@ -26,6 +26,7 @@ Note that
 
 1. Before 5.7.5, only a single simultaneous lock can be acquired in a session, and `get_lock()` releases any existing lock.
  * This gem raises `MysqlGetlock::Error` at `#lock` if another `get_lock()` for another key is issued in a session to prevent accidental releases of existing lock.
+ * MEMO: lock twice for the same key in a session does not block, only one lock is held for both mysql < 5.7.5 and >= 5.7.5.
 2. The key name is global in a mysql instance. It is advised to use database-specific or application-specific lock names such as `db_name.str` or `app_name.environment.str`
 
 ## Installation
@@ -49,7 +50,7 @@ Or install it yourself as:
 Similarly with ruby standard library [mutex](https://ruby-doc.org/core-2.2.0/Mutex.html), following methods are available:
 
 * lock
-  * Attempts to grab the lock and waits if it isn’t availabl. Returns true if successfully acquird a lock.
+  * Attempts to grab the lock and waits if it isn’t available. Returns true if successfully acquired a lock
 * locked?
   * Returns true if this lock is currently held by some (including myself)
 * synchronize {}
