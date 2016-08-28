@@ -48,13 +48,13 @@ Or install it yourself as:
 Similarly with ruby standard library [mutex](https://ruby-doc.org/core-2.2.0/Mutex.html), following methods are available:
 
 * lock
-  * Attempts to grab the lock and waits if it isn’t available.
+  * Attempts to grab the lock and waits if it isn’t availabl. Returns true if successfully acquird a lock.
 * locked?
   * Returns true if this lock is currently held by some.
 * synchronize {}
   * Obtains a lock, runs the block, and releases the lock when the block completes.
 * unlock
-  * Releases the lock.
+  * Releases the lock. Returns true if successfully released a lock.
 
 Options of `MysqlGetlock.new` are:
 

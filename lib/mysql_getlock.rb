@@ -33,12 +33,15 @@ class MysqlGetlock
     when 1
       logger.info { "#{log_head}Acquired a mysql lock '#{key}'" } if logger
       set_current_session_key(key)
+      true
     when 0
       logger.info { "#{log_head}Timeout to acquire a mysql lock '#{key}'" } if logger
       release_current_session_key
+      false
     else # nil
       logger.info { "#{log_head}Unknown Error to acquire a mysql lock '#{key}'" } if logger
       release_current_session_key
+      false
     end
   end
 
