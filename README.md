@@ -54,7 +54,7 @@ Similarly with ruby standard library [mutex](https://ruby-doc.org/core-2.2.0/Mut
 * locked?
   * Returns true if this lock is currently held by some (including myself)
 * synchronize {}
-  * Obtains a lock, runs the block, and releases the lock when the block completes.
+  * Obtains a lock, runs the block, and releases the lock when the block completes. Raises `MysqlGetlock::LockError` if failed to acquire a lock
 * unlock
   * Releases the lock. Returns true if successfully released a lock.
 * self_locked?
