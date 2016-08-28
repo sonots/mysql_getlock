@@ -24,7 +24,8 @@ MySQL `get_lock()` has a characteristic that the lock is implicitly released whe
 
 Note that
 
-1. Before 5.7.5, only a single simultaneous lock can be acquired in a session, and `GET_LOCK()` releases any existing lock. This gem raises `MysqlGetlock::Error` on such situation.
+1. Before 5.7.5, only a single simultaneous lock can be acquired in a session, and `get_lock()` releases any existing lock.
+ * This gem raises `MysqlGetlock::Error` at `#lock` if another `get_lock()` for another key is issued in a session to prevent accidental releases of existing lock.
 2. The key name is global in a mysql instance. It is advised to use database-specific or application-specific lock names such as `db_name.str` or `app_name.environment.str`
 
 ## Installation
