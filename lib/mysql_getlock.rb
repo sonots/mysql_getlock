@@ -10,9 +10,9 @@ class MysqlGetlock
 
   def initialize(mysql2:, key:, logger: nil, timeout: TIMEOUT)
     self.mysql2 = mysql2
-    self.key = key
-    self.logger = logger
-    self.timeout = timeout
+    @key = Mysql2::Client.escape(key)
+    @logger = logger
+    @timeout = timeout
   end
 
   # Use this setter if you reconnect mysql2 (which means renew Mysql2::Client instance),
