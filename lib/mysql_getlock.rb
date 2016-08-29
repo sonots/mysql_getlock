@@ -31,7 +31,7 @@ class MysqlGetlock
       raise Error, "get_lock() is already issued in the same connection for '#{current_session_key}'"
     end
 
-    logger.info { "#{log_head}Wait #{infinite_timeout? ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
+    logger.info { "#{log_head}Wait #{timeout < -1 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
     results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
     case results.to_a.first.first
     when 1
@@ -101,14 +101,6 @@ class MysqlGetlock
     else
       # To support MySQL < 5.5.8, put large number of seconds to express infinite timeout spuriously
       @timeout = (timeout < 0 ? PSEUDO_INFINITE_TIMEOUT : timeout)
-    end
-  end
-
-  def infinite_timeout?
-    if infinite_timeoutable?
-      @timeout < 0
-    else
-      @timeout >= PSEUDO_INFINITE_TIMEOUT
     end
   end
 
