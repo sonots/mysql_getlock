@@ -59,6 +59,8 @@ Similarly with ruby standard library [mutex](https://ruby-doc.org/core-2.2.0/Mut
   * Releases the lock. Returns true if successfully released a lock.
 * self_locked?
   * Returns true if this lock is currently held by myself.
+* try_lock
+  * Attempts to grab the lock and returns immediately without waits. Returns true if successfully acquired a lock
 
 Options of `MysqlGetlock.new` are:
 

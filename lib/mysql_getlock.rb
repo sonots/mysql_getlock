@@ -27,26 +27,11 @@ class MysqlGetlock
   end
 
   def lock
-    if !multiple_lockable? and (current_session_key and current_session_key != key)
-      raise Error, "get_lock() is already issued in the same connection for '#{current_session_key}'"
-    end
+    _lock(@timeout)
+  end
 
-    logger.info { "#{log_head}Wait #{timeout < -1 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
-    results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
-    case results.to_a.first.first
-    when 1
-      logger.info { "#{log_head}Acquired a mysql lock '#{key}'" } if logger
-      set_current_session_key(key)
-      true
-    when 0
-      logger.info { "#{log_head}Timeout to acquire a mysql lock '#{key}'" } if logger
-      release_current_session_key
-      false
-    else # nil
-      logger.info { "#{log_head}Unknown Error to acquire a mysql lock '#{key}'" } if logger
-      release_current_session_key
-      false
-    end
+  def try_lock
+    _lock(0)
   end
 
   def unlock
@@ -94,6 +79,29 @@ class MysqlGetlock
   end
 
   private
+
+  def _lock(timeout)
+    if !multiple_lockable? and (current_session_key and current_session_key != key)
+      raise Error, "get_lock() is already issued in the same connection for '#{current_session_key}'"
+    end
+
+    logger.info { "#{log_head}Wait #{timeout < -1 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
+    results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
+    case results.to_a.first.first
+    when 1
+      logger.info { "#{log_head}Acquired a mysql lock '#{key}'" } if logger
+      set_current_session_key(key)
+      true
+    when 0
+      logger.info { "#{log_head}Timeout to acquire a mysql lock '#{key}'" } if logger
+      release_current_session_key
+      false
+    else # nil
+      logger.info { "#{log_head}Unknown Error to acquire a mysql lock '#{key}'" } if logger
+      release_current_session_key
+      false
+    end
+  end
 
   def set_timeout(timeout)
     if infinite_timeoutable?

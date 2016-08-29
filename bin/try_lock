@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require "bundler/setup"
+require "mysql_getlock"
+require 'logger'
+
+mysql2 = Mysql2::Client.new
+mutex = MysqlGetlock.new(
+  mysql2: mysql2, key: 'mysql_getlock', logger: Logger.new(STDOUT), timeout: -1,
+)
+if mutex.try_lock
+  loop do
+    puts mutex.locked?
+    sleep 1
+  end
+else
+  puts 'exit'
+end
