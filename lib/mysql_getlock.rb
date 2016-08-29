@@ -5,22 +5,25 @@ class MysqlGetlock
   attr_reader :mysql2, :key, :logger, :timeout
 
   TIMEOUT = -1 # inifinity
+  PSEUDO_INFINITE_TIMEOUT = 4294967295 # for < 5.5.8
 
   class Error < ::StandardError; end
   class LockError < ::StandardError; end
 
   def initialize(mysql2:, key:, logger: nil, timeout: TIMEOUT)
     self.mysql2 = mysql2
-    @key = Mysql2::Client.escape(key)
-    @logger = logger
-    @timeout = timeout
+    set_key(key)
+    set_logger(logger)
+    set_timeout(timeout)
   end
 
   # Use this setter if you reconnect mysql2 (which means renew Mysql2::Client instance),
   # but still want to use same MysqlGetlock instance
   def mysql2=(mysql2)
     @mysql2 = mysql2
+    @mysql_version = nil
     @multiple_lockable = nil
+    @infinite_timeoutable = nil
   end
 
   def lock
@@ -28,7 +31,7 @@ class MysqlGetlock
       raise Error, "get_lock() is already issued in the same connection for '#{current_session_key}'"
     end
 
-    logger.info { "#{log_head}Wait #{timeout < 0 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
+    logger.info { "#{log_head}Wait #{infinite_timeout? ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
     results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
     case results.to_a.first.first
     when 1
@@ -92,6 +95,31 @@ class MysqlGetlock
 
   private
 
+  def set_timeout(timeout)
+    if infinite_timeoutable?
+      @timeout = timeout
+    else
+      # To support MySQL < 5.5.8, put large number of seconds to express infinite timeout spuriously
+      @timeout = (timeout < 0 ? PSEUDO_INFINITE_TIMEOUT : timeout)
+    end
+  end
+
+  def infinite_timeout?
+    if infinite_timeoutable?
+      @timeout < 0
+    else
+      @timeout >= PSEUDO_INFINITE_TIMEOUT
+    end
+  end
+
+  def set_key(key)
+    @key = Mysql2::Client.escape(key)
+  end
+
+  def set_logger(logger)
+    @logger = logger
+  end
+
   def log_head
     "PID-#{::Process.pid} TID-#{::Thread.current.object_id.to_s(36)}: "
   end
@@ -99,10 +127,23 @@ class MysqlGetlock
   # From MySQL 5.7.5, multiple simultaneous locks can be acquired
   def multiple_lockable?
     return @multiple_lockable unless @multiple_lockable.nil?
+    major, minor, patch = mysql_version
+    @multiple_lockable = (major > 5) || (major == 5 && minor > 7) || (major == 5 && minor == 7 && patch >= 5)
+  end
+
+  # Before MySQL 5.5.8, a negative timeout value means infinite timeout on Windows. As of 5.5.8, this behavior applies on all platforms.
+  def infinite_timeoutable?
+    return @infinite_timeoutable unless @infinite_timeoutable.nil?
+    major, minor, patch = mysql_version
+    @infinite_timeoutable = (major > 5) || (major == 5 && minor > 5) || (major == 5 && minor == 5 && patch >= 8)
+  end
+
+  def mysql_version
+    return @mysql_version if @mysql_version
     results = mysql2.query('select version()', as: :array)
     version = results.to_a.first.first
     major, minor, patch = version.split('.').map(&:to_i)
-    @multiple_lockable = (major > 5) || (major == 5 && minor > 7) || (major == 5 && minor == 7 && patch >= 5)
+    @mysql_version = [major, minor, patch]
   end
 
   # Before MySQL 5.7.5, only a single simultaneous lock can be acquired
