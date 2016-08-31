@@ -88,7 +88,7 @@ class MysqlGetlock
     if timeout == 0 # try_lock
       # no wait
     else
-      logger.info { "#{log_head}Wait #{timeout < -1 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
+      logger.info { "#{log_head}Wait #{timeout < 0 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
     end
 
     results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
