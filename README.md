@@ -73,7 +73,7 @@ Options of `MysqlGetlock.new` are:
 * logger
   * Provide a logger for MysqlGetlock (for debug)
 
-### Example
+## Example
 
 ```ruby
 require 'mysql2'
@@ -93,6 +93,33 @@ mutex.synchronize do
   puts 'get lock'
 end
 ```
+
+## USE CASE 1: Elimiate SPOF of cron job
+
+To eliminate SPOF of cron jobs, add following codes to your ruby scripts to be ran:
+
+```ruby
+mutex = MysqlGetlock.new(mysql2: mysql2, key: 'db_name.lock_key')
+
+# Exit immediately if a process at another host holds a lock already
+exit(0) unless mutex.try_lock
+
+# Hold an acquired lock 10 seconds at least because it is not assured
+# that cron jobs at multiple hosts start at exactly same time.
+started = Time.now
+begin
+  # do your main work
+ensure
+  sleep((duration = 10 - (Time.now - started).to_f) > 0 ? duration : 0)
+  mutex.unlock rescue nil
+end
+```
+
+Run this script in cron on multiple hosts.
+
+## ToDo
+
+* Prepare a command line tool like [daemontools' setlock](https://cr.yp.to/daemontools/setlock.html)
 
 ## Contributing
 
