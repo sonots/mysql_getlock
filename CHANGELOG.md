@@ -1,3 +1,9 @@
+# 0.2.3 (2016-08-31)
+
+Enhancements:
+
+* Add #try_lock
+
 # 0.2.2 (2016-08-29)
 
 Enhancements:
