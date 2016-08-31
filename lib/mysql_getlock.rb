@@ -85,7 +85,12 @@ class MysqlGetlock
       raise Error, "get_lock() is already issued in the same connection for '#{current_session_key}'"
     end
 
-    logger.info { "#{log_head}Wait #{timeout < -1 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
+    if timeout == 0 # try_lock
+      # no wait
+    else
+      logger.info { "#{log_head}Wait #{timeout < -1 ? '' : "#{timeout} sec "}to acquire a mysql lock '#{key}'" } if logger
+    end
+
     results = mysql2.query(%Q[select get_lock('#{key}', #{timeout})], as: :array)
     case results.to_a.first.first
     when 1
@@ -93,7 +98,11 @@ class MysqlGetlock
       set_current_session_key(key)
       true
     when 0
-      logger.info { "#{log_head}Timeout to acquire a mysql lock '#{key}'" } if logger
+      if timeout == 0 # try_lock
+        logger.info { "#{log_head}A mysql lock is already acquired by the other session '#{key}'" } if logger
+      else
+        logger.info { "#{log_head}Timeout to acquire a mysql lock '#{key}'" } if logger
+      end
       release_current_session_key
       false
     else # nil
