@@ -20,7 +20,7 @@ end
 
 MySQL `get_lock()` has a characteristic that the lock is implicitly released when your session terminates (either normally or abnormally). Safe!
 
-## NOTICE
+## NOTE
 
 Note that
 
@@ -116,6 +116,10 @@ end
 ```
 
 Run this script in cron on multiple hosts.
+
+## NOTICE
+
+We've encountered a situation that the mysql connection is disconnected from mysql server shortly, and the GET_LOCK is unlocked unexpectedly without waiting to finish a job. We need another trick to resolve this situation, and [redis_getlock](https://github.com/sonots/redis_getlock) would be a way to choose.
 
 ## ToDo
 
